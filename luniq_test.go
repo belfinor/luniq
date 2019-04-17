@@ -5,6 +5,7 @@ package luniq
 // @date    2019-04-17
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -14,8 +15,11 @@ func TestUniq(t *testing.T) {
 	defer u.Close()
 
 	for i := 0; i < 20; i++ {
-		if u.Next() == "" {
+		v := u.Next()
+		if v == "" {
 			t.Fatal("not work")
+		} else {
+			fmt.Println(v)
 		}
 	}
 }

@@ -1,7 +1,7 @@
 package luniq
 
 // @author  Mikhail Kirillov <mikkirillov@yandex.ru>
-// @version 1.004
+// @version 1.005
 // @date    2019-04-17
 
 import (
@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/belfinor/Helium/math/num/fibo"
 	"github.com/belfinor/lrand"
 )
 
@@ -35,20 +34,23 @@ func New(pref ...string) *Uniq {
 }
 
 func maker(ctx context.Context, stream chan string, prefix string) {
-	fb := fibo.New()
-	defer fb.Close()
+
+	fb1 := int64(1)
+	fb2 := int64(1)
 
 	//rnd := rand.New(rand.NewSource(time.Now().Unix()))
-	tact := lrand.Next() & 0xffff
+	tact := lrand.Next() & 0xffffff
 	crctab := crc32.MakeTable(crc32.IEEE)
 
 	calc := func() string {
 		ts := time.Now()
 		mod := ts.UnixNano() & 0xffff
 		epoch := ts.Unix()
-		fbv := fb.Next() & 0xffffffff
-		str := fmt.Sprintf("%s%016x%08x%04x%04x%08x", prefix, lrand.Next(), epoch, tact, mod, fbv)
-		tact = (tact + 1) & 0xffff
+		str := fmt.Sprintf("%s%016x%08x%06x%04x%06x", prefix, lrand.Next(), epoch, tact, mod, fb1&0xffffffff)
+		fb3 := fb1 + fb2
+		fb1 = fb2
+		fb2 = fb3
+		tact = (tact + 1) & 0xffffff
 		return fmt.Sprintf("%s%08x", str, crc32.Checksum([]byte(str), crctab))
 	}
 
@@ -56,6 +58,7 @@ func maker(ctx context.Context, stream chan string, prefix string) {
 		select {
 		case stream <- calc():
 		case <-ctx.Done():
+			close(stream)
 			return
 		}
 	}
