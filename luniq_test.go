@@ -5,7 +5,6 @@ package luniq
 // @date    2019-04-17
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -18,8 +17,6 @@ func TestUniq(t *testing.T) {
 		v := u.Next()
 		if v == "" {
 			t.Fatal("not work")
-		} else {
-			fmt.Println(v)
 		}
 	}
 }
