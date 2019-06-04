@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"hash/crc32"
+	"strconv"
 	"strings"
 	"time"
 
@@ -52,7 +53,7 @@ func maker(ctx context.Context, stream chan string, prefix string) {
 		ts := time.Now()
 		mod := ts.UnixNano() & 0xffff
 		epoch := ts.Unix()
-		str := fmt.Sprintf("%s%016x%08x%06x%04x%06x", prefix, lrand.Next(), epoch, tact, mod, fb1&0xffffffff)
+		str := fmt.Sprintf("%s%016x%08x%06x%04x%06x", prefix, lrand.Next(), epoch, tact, mod, fb1&0xffffff)
 		fb3 := fb1 + fb2
 		fb1 = fb2
 		fb2 = fb3
@@ -82,6 +83,16 @@ func (u *Uniq) Check(val string, fullCheck bool) bool {
 	waitLen := len(u.pref) + 48
 
 	if len(val) != waitLen {
+		return false
+	}
+
+	thex := val[waitLen-32 : waitLen-24]
+	ts, e := strconv.ParseInt(thex, 16, 64)
+	if e != nil {
+		return false
+	}
+
+	if ts > time.Now().Unix()+300 {
 		return false
 	}
 
