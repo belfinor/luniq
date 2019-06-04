@@ -1,8 +1,8 @@
 package luniq
 
 // @author  Mikhail Kirillov <mikkirillov@yandex.ru>
-// @version 1.005
-// @date    2019-04-17
+// @version 1.006
+// @date    2019-06-04
 
 import (
 	"context"
@@ -14,8 +14,15 @@ import (
 	"github.com/belfinor/lrand"
 )
 
+var crctab *crc32.Table
+
+func init() {
+	crctab = crc32.MakeTable(crc32.IEEE)
+}
+
 type Uniq struct {
 	next   chan string
+	pref   string
 	cancel context.CancelFunc
 }
 
@@ -27,8 +34,9 @@ func New(pref ...string) *Uniq {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	obj.cancel = cancel
+	obj.pref = strings.Join(pref, "")
 
-	go maker(ctx, obj.next, strings.Join(pref, ""))
+	go maker(ctx, obj.next, obj.pref)
 
 	return obj
 }
@@ -38,9 +46,7 @@ func maker(ctx context.Context, stream chan string, prefix string) {
 	fb1 := int64(1)
 	fb2 := int64(1)
 
-	//rnd := rand.New(rand.NewSource(time.Now().Unix()))
 	tact := lrand.Next() & 0xffffff
-	crctab := crc32.MakeTable(crc32.IEEE)
 
 	calc := func() string {
 		ts := time.Now()
@@ -70,4 +76,20 @@ func (u *Uniq) Next() string {
 
 func (u *Uniq) Close() {
 	u.cancel()
+}
+
+func (u *Uniq) Check(val string, fullCheck bool) bool {
+	waitLen := len(u.pref) + 48
+
+	if len(val) != waitLen {
+		return false
+	}
+
+	if fullCheck {
+		sig := val[waitLen-8:]
+		waitSig := fmt.Sprintf("%08x", crc32.Checksum([]byte(val[:waitLen-8]), crctab))
+		return sig == waitSig
+	}
+
+	return true
 }
