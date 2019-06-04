@@ -27,4 +27,8 @@ func TestUniq(t *testing.T) {
 			t.Fatal("Check full=true failed")
 		}
 	}
+
+	if u.Check("dwqedwedqwedeqwdqw", false) {
+		t.Fatal("Check invalid value success")
+	}
 }
