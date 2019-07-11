@@ -15,12 +15,6 @@ import (
 	"github.com/belfinor/lrand"
 )
 
-var crctab *crc32.Table
-
-func init() {
-	crctab = crc32.MakeTable(crc32.IEEE)
-}
-
 type Uniq struct {
 	next   chan string
 	pref   string
@@ -29,7 +23,7 @@ type Uniq struct {
 
 func New(pref ...string) *Uniq {
 	obj := &Uniq{
-		next: make(chan string, 10),
+		next: make(chan string, 100),
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
