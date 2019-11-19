@@ -29,7 +29,7 @@ func main() {
 }
 ```
 
-This code print output like this:
+This code prints output like this:
 
 ```
 f590291092005a35f5dd440c4aa157f22e61ad22459700cb2
