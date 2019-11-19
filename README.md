@@ -1,6 +1,6 @@
 # Summary
 
-luniq - short non-sequential url-friendly unique id generator written on pure Go (requires >= 1.10)
+luniq - short non-sequential url-friendly unique id generator written on pure Go (version >= 1.10)
 
 # Install
 
