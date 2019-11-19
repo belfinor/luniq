@@ -44,6 +44,8 @@ f434584e8a20465375dd440c4aa157f22e622664bdf90c72a
 f7112aa68239618395dd440c4aa157f22e6236b533f253ffb
 ```
 
+*Next* method is optimized for multithreaded access. It precomputes a pool of values ​​to reduce time.
+
 # Verify uniq
 
 Moreover, luniq allows you to check uniq values:
@@ -61,6 +63,7 @@ func main() {
 
   uniq := luniq.Next()
 
+  // lite check if 2nd param is false
   if luniq.Check(uniq, true) {
     fmt.Println( uniq, "valid")
   }
