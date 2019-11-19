@@ -1,8 +1,8 @@
 package luniq
 
 // @author  Mikhail Kirillov <mikkirillov@yandex.ru>
-// @version 1.000
-// @date    2019-07-11
+// @version 1.001
+// @date    2019-11-19
 
 import (
 	"testing"

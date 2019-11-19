@@ -1,15 +1,15 @@
 package luniq
 
 // @author  Mikhail Kirillov <mikkirillov@yandex.ru>
-// @version 1.006
-// @date    2019-06-04
+// @version 1.007
+// @date    2019-11-19
 
 import (
 	"context"
 	"fmt"
 	"hash/crc32"
+	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/belfinor/lrand"
@@ -17,7 +17,6 @@ import (
 
 type Uniq struct {
 	next   chan string
-	pref   string
 	cancel context.CancelFunc
 }
 
@@ -29,30 +28,34 @@ func New(pref ...string) *Uniq {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	obj.cancel = cancel
-	obj.pref = strings.Join(pref, "")
 
-	go maker(ctx, obj.next, obj.pref)
+	go maker(ctx, obj.next)
 
 	return obj
 }
 
-func maker(ctx context.Context, stream chan string, prefix string) {
+func maker(ctx context.Context, stream chan string) {
 
-	fb1 := int64(1)
-	fb2 := int64(1)
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = strconv.FormatInt(time.Now().Unix(), 10)
+	}
 
-	tact := lrand.Next() & 0xffffff
+	hc := crc32.ChecksumIEEE([]byte(hostname))
+
+	tact := lrand.Next() & 0xffff
 
 	calc := func() string {
-		ts := time.Now()
-		mod := ts.UnixNano() & 0xffff
-		epoch := ts.Unix()
-		str := fmt.Sprintf("%s%016x%08x%06x%04x%06x", prefix, lrand.Next(), epoch, tact, mod, fb1&0xffffff)
-		fb3 := fb1 + fb2
-		fb1 = fb2
-		fb2 = fb3
-		tact = (tact + 1) & 0xffffff
-		return fmt.Sprintf("%s%08x", str, crc32.Checksum([]byte(str), crctab))
+
+		tm := time.Now()
+
+		mod := tm.UnixNano() & 0xffff
+
+		str := fmt.Sprintf("f%016x%08x%08x%04x%04x", lrand.Next(), tm.Unix(), hc, tact, mod) // 41
+
+		tact = (tact + 1) & 0xffff
+
+		return fmt.Sprintf("%s%08x", str, crc32.ChecksumIEEE([]byte(str))) // 49
 	}
 
 	for {
@@ -74,13 +77,13 @@ func (u *Uniq) Close() {
 }
 
 func (u *Uniq) Check(val string, fullCheck bool) bool {
-	waitLen := len(u.pref) + 48
+	waitLen := 49
 
 	if len(val) != waitLen {
 		return false
 	}
 
-	thex := val[waitLen-32 : waitLen-24]
+	thex := val[17:25]
 	ts, e := strconv.ParseInt(thex, 16, 64)
 	if e != nil {
 		return false
@@ -92,7 +95,7 @@ func (u *Uniq) Check(val string, fullCheck bool) bool {
 
 	if fullCheck {
 		sig := val[waitLen-8:]
-		waitSig := fmt.Sprintf("%08x", crc32.Checksum([]byte(val[:waitLen-8]), crctab))
+		waitSig := fmt.Sprintf("%08x", crc32.ChecksumIEEE([]byte(val[:waitLen-8])))
 		return sig == waitSig
 	}
 

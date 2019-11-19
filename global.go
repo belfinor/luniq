@@ -1,20 +1,14 @@
 package luniq
 
 // @author  Mikhail Kirillov <mikkirillov@yandex.ru>
-// @version 1.000
-// @date    2019-07-11
-
-import (
-	"hash/crc32"
-)
+// @version 1.001
+// @date    2019-11-19
 
 var (
-	crctab *crc32.Table
 	global *Uniq
 )
 
 func init() {
-	crctab = crc32.MakeTable(crc32.IEEE)
 	global = New()
 }
 
